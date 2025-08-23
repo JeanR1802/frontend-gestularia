@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 
-// Definimos un tipo para la tienda
+// --- Tipo de Tienda ---
 type Store = {
   id: string;
   name: string;
@@ -12,31 +12,33 @@ type Store = {
   status: string;
 };
 
-// --- COMPONENTE StoreCard (MODIFICADO) ---
+// --- Componente StoreCard ---
 function StoreCard({ store }: { store: Store }) {
-  const isBuilt = store.status === 'BUILT';
+  const isBuilt = store.status === "BUILT";
   return (
     <div className="p-6 bg-white border rounded-lg shadow-md">
       <h2 className="text-2xl font-bold">{store.name}</h2>
       <p className="text-sm text-gray-500 mb-4">
-        Estado: <span className={`font-semibold ${isBuilt ? 'text-green-600' : 'text-yellow-600'}`}>{isBuilt ? 'Publicada' : 'No Construida'}</span>
+        Estado:{" "}
+        <span
+          className={`font-semibold ${
+            isBuilt ? "text-green-600" : "text-yellow-600"
+          }`}
+        >
+          {isBuilt ? "Publicada" : "No Construida"}
+        </span>
       </p>
-      
-      {/* Contenedor para los botones */}
       <div className="mt-4 flex flex-col sm:flex-row gap-2">
-        <Link 
+        <Link
           href="/dashboard/editor"
           className="block w-full text-center py-2 text-white rounded-lg bg-indigo-600 hover:bg-indigo-700"
         >
-          {isBuilt ? 'Editar Tienda' : 'Construir Tienda'}
+          {isBuilt ? "Editar Tienda" : "Construir Tienda"}
         </Link>
-        
-        {/* --- ¡NUEVO BOTÓN! --- */}
-        {/* Este botón solo aparece si la tienda está construida (isBuilt es true) */}
         {isBuilt && (
           <Link
-            href={`/tiendas/${store.slug}`}
-            target="_blank" // Abre la tienda en una nueva pestaña
+            href={`https://backendg-seven.vercel.app/tiendas/${store.slug}`}
+            target="_blank"
             rel="noopener noreferrer"
             className="block w-full text-center py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800"
           >
@@ -48,28 +50,38 @@ function StoreCard({ store }: { store: Store }) {
   );
 }
 
-// --- Componente CreateStoreForm (sin cambios) ---
+// --- Componente CreateStoreForm ---
 function CreateStoreForm({ onStoreCreated }: { onStoreCreated: (newStore: Store) => void }) {
-  const [name, setName] = useState('');
+  const [name, setName] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const token = localStorage.getItem('token');
-    
-    const response = await fetch('http://localhost:4000/api/store', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-      body: JSON.stringify({ name }),
-    });
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("Debes iniciar sesión primero.");
+      return;
+    }
 
-    if (response.ok) {
-      const newStore = await response.json();
-      onStoreCreated(newStore);
-    } else {
-      alert('Error al crear la tienda.');
+    try {
+      const response = await fetch("https://backendg-seven.vercel.app/api/store", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ name }),
+      });
+
+      if (response.ok) {
+        const newStore = await response.json();
+        onStoreCreated(newStore);
+      } else {
+        const err = await response.json();
+        alert(err.error || "Error al crear la tienda.");
+      }
+    } catch (error) {
+      console.error(error);
+      alert("No se pudo conectar con el servidor.");
     }
   };
 
@@ -85,7 +97,10 @@ function CreateStoreForm({ onStoreCreated }: { onStoreCreated: (newStore: Store)
           className="w-full px-3 py-2 border rounded-lg mb-4"
           required
         />
-        <button type="submit" className="w-full py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700">
+        <button
+          type="submit"
+          className="w-full py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+        >
           Generar Tienda
         </button>
       </form>
@@ -93,30 +108,36 @@ function CreateStoreForm({ onStoreCreated }: { onStoreCreated: (newStore: Store)
   );
 }
 
-// --- Componente Principal DashboardPage (sin cambios) ---
+// --- Componente Principal DashboardPage ---
 export default function DashboardPage() {
   const [store, setStore] = useState<Store | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem("token");
     if (!token) {
-      router.push('/login');
+      router.push("/login");
       return;
     }
 
     const fetchStore = async () => {
-      const response = await fetch('http://localhost:4000/api/store', {
-        headers: { 'Authorization': `Bearer ${token}` },
-      });
+      try {
+        const response = await fetch("https://backendg-seven.vercel.app/api/store", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
 
-      if (response.ok) {
-        const data = await response.json();
-        setStore(data);
-      } else if (response.status === 401 || response.status === 403) {
-        localStorage.removeItem('token');
-        router.push('/login');
+        if (response.ok) {
+          const data = await response.json();
+          setStore(data);
+        } else if (response.status === 401 || response.status === 403) {
+          localStorage.removeItem("token");
+          router.push("/login");
+        } else {
+          console.error("Error al obtener la tienda", response.statusText);
+        }
+      } catch (error) {
+        console.error("Error de conexión:", error);
       }
       setIsLoading(false);
     };
@@ -125,7 +146,9 @@ export default function DashboardPage() {
   }, [router]);
 
   if (isLoading) {
-    return <div className="flex justify-center items-center min-h-screen">Cargando...</div>;
+    return (
+      <div className="flex justify-center items-center min-h-screen">Cargando...</div>
+    );
   }
 
   return (
@@ -133,10 +156,10 @@ export default function DashboardPage() {
       <header className="bg-white shadow-sm">
         <nav className="container mx-auto px-6 py-4 flex justify-between items-center">
           <h1 className="text-xl font-bold">Mi Dashboard</h1>
-          <button 
+          <button
             onClick={() => {
-              localStorage.removeItem('token');
-              router.push('/login');
+              localStorage.removeItem("token");
+              router.push("/login");
             }}
             className="text-sm text-gray-600 hover:underline"
           >
