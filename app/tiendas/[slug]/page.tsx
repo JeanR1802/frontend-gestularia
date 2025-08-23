@@ -16,8 +16,9 @@ function MaintenancePage({ storeName }: { storeName: string }) {
 // Función que se ejecuta en el servidor para buscar los datos de la tienda
 async function getStoreData(slug: string) {
   try {
-    const res = await fetch(`http://localhost:4000/api/tiendas/${slug}`, {
-      cache: 'no-store', // Asegura que siempre busquemos los datos más recientes
+    const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:4000/api";
+    const res = await fetch(`${API_BASE}/tiendas/${slug}`, {
+      cache: 'no-store', // Siempre buscar datos recientes
     });
     if (!res.ok) return null;
     return res.json();
@@ -28,8 +29,6 @@ async function getStoreData(slug: string) {
 }
 
 // --- COMPONENTES DE PLANTILLA ---
-// Estos son componentes simples que representan diferentes estilos de tienda.
-
 function TemplateModerno({ store }: { store: any }) {
   return (
     <div style={{ fontFamily: 'sans-serif' }}>
@@ -82,6 +81,6 @@ export default async function PublicStorePage({ params }: { params: { slug: stri
     // case 'minimalista':
     //   return <TemplateMinimalista store={store} />;
     default:
-      return <TemplateModerno store={store} />; // Usamos 'moderno' como plantilla por defecto
+      return <TemplateModerno store={store} />; // Plantilla por defecto
   }
 }
