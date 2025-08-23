@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
-// Tipos de datos para el editor
+// Tipos de datos
 type Product = { 
   id: string; 
   name: string; 
@@ -24,11 +24,14 @@ type Store = {
   primaryColor?: string;
 };
 
-// Componente para el interruptor de modo mantenimiento
+// Cambia esta URL por la de tu backend en producción
+const API_BASE = "https://tu-backend.vercel.app/api";
+
+// Componente Toggle de modo mantenimiento
 function MaintenanceToggle({ store, onToggle }: { store: Store, onToggle: (updatedStore: Store) => void }) {
   const handleToggle = async () => {
     const token = localStorage.getItem('token');
-    const response = await fetch('http://localhost:4000/api/store/maintenance', {
+    const response = await fetch(`${API_BASE}/store/maintenance`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -56,23 +59,25 @@ function MaintenanceToggle({ store, onToggle }: { store: Store, onToggle: (updat
   );
 }
 
+// Página del editor
 export default function EditorPage() {
   const [store, setStore] = useState<Store | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
   
-  // Estados para los formularios
+  // Formularios
   const [productName, setProductName] = useState('');
   const [productPrice, setProductPrice] = useState('');
   const [productImageUrl, setProductImageUrl] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   
-  // Estados para el editor visual
+  // Editor visual
   const [template, setTemplate] = useState('moderno');
   const [heroTitle, setHeroTitle] = useState('');
   const [heroDescription, setHeroDescription] = useState('');
   const [primaryColor, setPrimaryColor] = useState('#0f172a');
 
+  // Carga inicial
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) { 
@@ -82,7 +87,7 @@ export default function EditorPage() {
 
     const fetchStore = async () => {
       try {
-        const response = await fetch('http://localhost:4000/api/store', { headers: { 'Authorization': `Bearer ${token}` } });
+        const response = await fetch(`${API_BASE}/store`, { headers: { 'Authorization': `Bearer ${token}` } });
         if (response.ok) {
           const data: Store = await response.json();
           setStore(data);
@@ -91,6 +96,7 @@ export default function EditorPage() {
           setHeroDescription(data.heroDescription || 'Los mejores productos, a los mejores precios.');
           setPrimaryColor(data.primaryColor || '#0f172a');
         } else {
+          localStorage.removeItem('token');
           router.push('/login');
         }
       } catch (error) { 
@@ -102,9 +108,10 @@ export default function EditorPage() {
     fetchStore();
   }, [router]);
   
+  // Guardar cambios de template
   const handleSaveChanges = async () => {
     const token = localStorage.getItem('token');
-    const response = await fetch('http://localhost:4000/api/store/template', {
+    const response = await fetch(`${API_BASE}/store/template`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
       body: JSON.stringify({ template, heroTitle, heroDescription, primaryColor }),
@@ -116,6 +123,7 @@ export default function EditorPage() {
     }
   };
 
+  // Subir imagen de producto
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -124,7 +132,7 @@ export default function EditorPage() {
     const formData = new FormData();
     formData.append('image', file);
 
-    const apiKey = "5ce1f3fae30e233ec0e18cab9c9c7cb4"; // Reemplaza con tu API Key de ImgBB
+    const apiKey = "5ce1f3fae30e233ec0e18cab9c9c7cb4"; // tu API Key ImgBB
     
     try {
       const response = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
@@ -132,25 +140,23 @@ export default function EditorPage() {
         body: formData,
       });
       const result = await response.json();
-      if (result.success) {
-        setProductImageUrl(result.data.url);
-      } else {
-        throw new Error('Error al subir la imagen.');
-      }
+      if (result.success) setProductImageUrl(result.data.url);
+      else throw new Error('Error al subir la imagen.');
     } catch (error) {
       console.error(error);
-      alert('Hubo un problema al subir la imagen. Inténtalo de nuevo.');
+      alert('Hubo un problema al subir la imagen.');
     } finally {
       setIsUploading(false);
     }
   };
 
+  // Añadir producto
   const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!store) return;
     const token = localStorage.getItem('token');
 
-    const response = await fetch('http://localhost:4000/api/products', {
+    const response = await fetch(`${API_BASE}/products`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
       body: JSON.stringify({ name: productName, price: parseFloat(productPrice), imageUrl: productImageUrl, storeId: store.id }),
@@ -162,16 +168,15 @@ export default function EditorPage() {
       setProductName(''); 
       setProductPrice(''); 
       setProductImageUrl('');
-    } else {
-      alert('Error al añadir el producto.');
-    }
+    } else alert('Error al añadir el producto.');
   };
 
+  // Eliminar producto
   const handleDeleteProduct = async (productId: string) => {
-    if (!confirm('¿Estás seguro de que quieres eliminar este producto?')) return;
+    if (!confirm('¿Estás seguro de eliminar este producto?')) return;
     
     const token = localStorage.getItem('token');
-    const response = await fetch(`http://localhost:4000/api/products/${productId}`, {
+    const response = await fetch(`${API_BASE}/products/${productId}`, {
       method: 'DELETE',
       headers: { 'Authorization': `Bearer ${token}` },
     });
@@ -183,22 +188,21 @@ export default function EditorPage() {
     }
   };
 
+  // Publicar tienda
   const handlePublish = async () => {
     if (!store) return;
     const token = localStorage.getItem('token');
     
-    const response = await fetch('http://localhost:4000/api/store/publish', {
-        method: 'PUT',
-        headers: { 'Authorization': `Bearer ${token}` },
+    const response = await fetch(`${API_BASE}/store/publish`, {
+      method: 'PUT',
+      headers: { 'Authorization': `Bearer ${token}` },
     });
 
     if(response.ok) {
-        const updatedStore = await response.json();
-        setStore(prev => prev ? { ...prev, ...updatedStore } : null);
-        alert('¡Tienda publicada con éxito!');
-    } else {
-        alert('Error al publicar la tienda.');
-    }
+      const updatedStore = await response.json();
+      setStore(prev => prev ? { ...prev, ...updatedStore } : null);
+      alert('¡Tienda publicada con éxito!');
+    } else alert('Error al publicar la tienda.');
   };
 
   if (isLoading) return <div className="flex justify-center items-center min-h-screen">Cargando...</div>;
@@ -208,21 +212,18 @@ export default function EditorPage() {
     <div className="container mx-auto p-4 sm:p-8">
       <header className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6 border-b pb-4">
         <div className="flex-grow">
-          <Link href="/dashboard" className="text-blue-600 hover:underline text-sm">
-            &larr; Volver al Dashboard
-          </Link>
+          <Link href="/dashboard" className="text-blue-600 hover:underline text-sm">&larr; Volver al Dashboard</Link>
           <h1 className="text-3xl sm:text-4xl font-bold mt-1">Editor de: {store.name}</h1>
         </div>
         {store.status === 'BUILT' && (
           <MaintenanceToggle 
             store={store} 
-            onToggle={(updatedStore) => {
-              setStore(prev => prev ? { ...prev, ...updatedStore } : null);
-            }} 
+            onToggle={(updatedStore) => setStore(prev => prev ? { ...prev, ...updatedStore } : null)} 
           />
         )}
       </header>
 
+      {/* Personalización */}
       <div className="my-8 p-6 bg-white rounded-lg shadow-md">
         <h2 className="text-2xl font-semibold mb-4">Personaliza tu Tienda</h2>
         <div className="space-y-4">
@@ -239,11 +240,10 @@ export default function EditorPage() {
             <input type="color" value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)} className="w-full h-10 p-1 border rounded mt-1" />
           </div>
         </div>
-        <button onClick={handleSaveChanges} className="mt-6 px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
-          Guardar Cambios
-        </button>
+        <button onClick={handleSaveChanges} className="mt-6 px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">Guardar Cambios</button>
       </div>
 
+      {/* Añadir productos */}
       <div className="mb-8 p-6 bg-white rounded-lg shadow-md">
         <h2 className="text-2xl font-semibold mb-4">Añadir Productos</h2>
         <form onSubmit={handleAddProduct} className="space-y-4">
@@ -252,7 +252,7 @@ export default function EditorPage() {
             <input type="text" placeholder="Ej: Camiseta de Algodón" value={productName} onChange={(e) => setProductName(e.target.value)} className="w-full p-2 border rounded" required />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Precio (ej: 19.99)</label>
+            <label className="block text-sm font-medium text-gray-700">Precio</label>
             <input type="number" step="0.01" placeholder="19.99" value={productPrice} onChange={(e) => setProductPrice(e.target.value)} className="w-full p-2 border rounded" required />
           </div>
           <div>
@@ -266,7 +266,8 @@ export default function EditorPage() {
           </button>
         </form>
       </div>
-      
+
+      {/* Lista de productos */}
       <div className="p-6 bg-white rounded-lg shadow-md">
          <h2 className="text-2xl font-semibold mb-4">Mis Productos</h2>
          {store.products.length > 0 ? (
@@ -284,9 +285,7 @@ export default function EditorPage() {
          {store.status !== 'BUILT' && (
             <div className="mt-6 border-t pt-6 text-center">
                 <p className="text-gray-600 mb-4">Una vez que hayas personalizado tu tienda y añadido tus productos, puedes publicarla.</p>
-                <button onClick={handlePublish} className="px-8 py-3 bg-purple-600 text-white font-bold rounded-lg hover:bg-purple-700">
-                    Publicar Tienda
-                </button>
+                <button onClick={handlePublish} className="px-8 py-3 bg-purple-600 text-white font-bold rounded-lg hover:bg-purple-700">Publicar Tienda</button>
             </div>
          )}
       </div>
