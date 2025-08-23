@@ -15,7 +15,8 @@ export default function LoginPage() {
     setError('');
 
     try {
-      const response = await fetch('http://localhost:4000/api/auth/login', {
+      // Usamos la variable de entorno para la URL del backend
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
@@ -23,8 +24,9 @@ export default function LoginPage() {
 
       if (response.ok) {
         const { accessToken } = await response.json();
-        localStorage.setItem('token', accessToken); // Guardamos el token
-        router.push('/dashboard');
+        // Guardamos el token en localStorage
+        localStorage.setItem('token', accessToken);
+        router.push('/dashboard'); // Redirigimos al dashboard
       } else {
         const data = await response.json();
         setError(data.error || 'Error al iniciar sesión.');
@@ -35,7 +37,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen">
+    <div className="flex justify-center items-center min-h-screen bg-gray-100">
       <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-md">
         <h1 className="text-2xl font-bold text-center">Iniciar Sesión</h1>
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -60,12 +62,18 @@ export default function LoginPage() {
             />
           </div>
           {error && <p className="text-red-500 text-sm text-center">{error}</p>}
-          <button type="submit" className="w-full py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700">
+          <button
+            type="submit"
+            className="w-full py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+          >
             Entrar
           </button>
         </form>
-         <p className="text-sm text-center">
-          ¿No tienes una cuenta? <Link href="/register" className="text-blue-600 hover:underline">Regístrate</Link>
+        <p className="text-sm text-center">
+          ¿No tienes una cuenta?{' '}
+          <Link href="/register" className="text-blue-600 hover:underline">
+            Regístrate
+          </Link>
         </p>
       </div>
     </div>
