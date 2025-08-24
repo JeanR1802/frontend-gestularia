@@ -11,7 +11,7 @@ export default function RegisterPage() {
   const router = useRouter();
 
   // Usar variable de entorno para el backend
-  const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "https://tu-backend.vercel.app/api";
+  const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "https://backendg-seven.vercel.app/";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
