@@ -83,9 +83,13 @@ function getSlugFromHost(host: string) {
 }
 
 // --- Página pública ---
-export default async function PublicStorePage({ params }: { params: { slug: string } }) {
+interface PublicStorePageProps {
+  params: { slug: string };
+}
+
+export default async function PublicStorePage({ params }: PublicStorePageProps) {
   // Detectar host (subdominio) en server o fallback a params.slug
-  const host = typeof window !== "undefined" ? window.location.host : params.slug;
+  let host = typeof window !== "undefined" ? window.location.host : params.slug;
   const slug = getSlugFromHost(host) || params.slug;
 
   const store = await getStoreData(slug);
