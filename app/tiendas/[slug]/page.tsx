@@ -20,7 +20,7 @@ function MaintenancePage({ storeName }: { storeName: string }) {
 // Función para obtener datos de la tienda desde el backend
 async function getStoreData(slug: string) {
   try {
-    const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "https://tu-backend.vercel.app/api";
+    const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "https://backendg-seven.vercel.app";
     const res = await fetch(`${API_BASE}/tiendas/${slug}`, {
       cache: "no-store", // Siempre datos recientes
     });
