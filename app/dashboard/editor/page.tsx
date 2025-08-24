@@ -125,7 +125,7 @@ export default function EditorPage() {
   // Guardar cambios de template
   const handleSaveChanges = async () => {
     const token = localStorage.getItem("token");
-    const response = await fetch(`${API_BASE}/store/template`, {
+    const response = await fetch(`${API_BASE}/api/store/template`, {
       method: "PUT",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify({ template, heroTitle, heroDescription, primaryColor }),
@@ -170,7 +170,7 @@ export default function EditorPage() {
     if (!store) return;
     const token = localStorage.getItem("token");
 
-    const response = await fetch(`${API_BASE}/products`, {
+    const response = await fetch(`${API_BASE}/api/products`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify({
@@ -195,7 +195,7 @@ export default function EditorPage() {
     if (!confirm("¿Estás seguro de eliminar este producto?")) return;
 
     const token = localStorage.getItem("token");
-    const response = await fetch(`${API_BASE}/products/${productId}`, {
+    const response = await fetch(`${API_BASE}/api/products/${productId}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -212,7 +212,7 @@ export default function EditorPage() {
     if (!store) return;
     const token = localStorage.getItem("token");
 
-    const response = await fetch(`${API_BASE}/store/publish`, {
+    const response = await fetch(`${API_BASE}/api/store/publish`, {
       method: "PUT",
       headers: { Authorization: `Bearer ${token}` },
     });
