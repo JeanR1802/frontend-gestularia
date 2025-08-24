@@ -1,6 +1,8 @@
 // app/tiendas/[slug]/page.tsx
-
 import React from "react";
+
+// --- Evitamos usar "use client" para SSR dinámico ---
+export const dynamic = "force-dynamic";
 
 // --- Componente de mantenimiento ---
 function MaintenancePage({ storeName }: { storeName: string }) {
@@ -61,7 +63,7 @@ function TemplateModerno({ store }: { store: any }) {
   );
 }
 
-// --- Obtener datos del backend ---
+// --- Función para obtener datos del backend ---
 async function getStoreData(slug: string) {
   try {
     const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "https://api.gestularia.com";
@@ -74,7 +76,7 @@ async function getStoreData(slug: string) {
   }
 }
 
-// --- Extraer subdominio ---
+// --- Función para extraer subdominio ---
 function getSlugFromHost(host: string) {
   const mainDomain = "gestularia.com";
   if (!host.endsWith(mainDomain)) return null;
@@ -82,18 +84,14 @@ function getSlugFromHost(host: string) {
   return subdomain === "www" || subdomain === "" ? null : subdomain;
 }
 
-// --- Esto fuerza SSR dinámico ---
-export const dynamic = "force-dynamic";
-
 // --- Página pública ---
 interface PublicStorePageProps {
   params: { slug: string };
-  headers?: () => Headers;
+  headers: () => Headers;
 }
 
 export default async function PublicStorePage({ params, headers }: PublicStorePageProps) {
-  // Tomar host desde request headers (SSR)
-  const host = headers ? headers().get("host") || params.slug : params.slug;
+  const host = headers().get("host") || params.slug;
   const slug = getSlugFromHost(host) || params.slug;
 
   const store = await getStoreData(slug);
