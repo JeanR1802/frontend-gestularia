@@ -36,12 +36,12 @@ function StoreCard({ store }: { store: Store }) {
           {isBuilt ? "Editar Tienda" : "Construir Tienda"}
         </Link>
         {isBuilt && (
-          <Link
-            href={`https://backendg-seven.vercel.app/tiendas/${store.slug}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block w-full text-center py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800"
-          >
+        <Link
+          href={`/tiendas/${store.slug}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block w-full text-center py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800"
+        >
             Visitar Tienda
           </Link>
         )}

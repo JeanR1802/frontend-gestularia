@@ -2,7 +2,7 @@
 
 import React from "react";
 
-// Componente para mostrar cuando la tienda está en mantenimiento
+// --- Componente de mantenimiento ---
 function MaintenancePage({ storeName }: { storeName: string }) {
   return (
     <div className="flex items-center justify-center min-h-screen text-center bg-gray-50">
@@ -17,10 +17,11 @@ function MaintenancePage({ storeName }: { storeName: string }) {
   );
 }
 
-// Función para obtener datos de la tienda desde el backend
+// --- Función para obtener datos del backend ---
 async function getStoreData(slug: string) {
   try {
-    const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "https://backendg-seven.vercel.app";
+    const API_BASE =
+      process.env.NEXT_PUBLIC_API_BASE || "https://backendg-seven.vercel.app";
     const res = await fetch(`${API_BASE}/tiendas/${slug}`, {
       cache: "no-store", // Siempre datos recientes
     });
@@ -32,7 +33,15 @@ async function getStoreData(slug: string) {
   }
 }
 
-// --- COMPONENTES DE PLANTILLA ---
+// --- Función para extraer slug desde subdominio ---
+function getSlugFromHost(host: string) {
+  const mainDomain = "gestularia.com";
+  if (!host.endsWith(mainDomain)) return null;
+  const subdomain = host.replace(`.${mainDomain}`, "");
+  return subdomain === "www" || subdomain === "" ? null : subdomain;
+}
+
+// --- Plantilla moderno ---
 function TemplateModerno({ store }: { store: any }) {
   const primaryColor = store.primaryColor || "#0f172a";
   const heroTitle = store.heroTitle || store.name || "Bienvenidos a la tienda";
@@ -76,15 +85,21 @@ function TemplateModerno({ store }: { store: any }) {
   );
 }
 
-// --- PÁGINA PÚBLICA PRINCIPAL ---
+// --- Página principal pública ---
 interface PublicStorePageProps {
   params: { slug: string };
 }
 
 export default async function PublicStorePage({ params }: PublicStorePageProps) {
-  const store = await getStoreData(params.slug);
+  // Detectar host (server-side) o usar slug de params como fallback
+  const host =
+    typeof window !== "undefined" ? window.location.host : params.slug;
+  const slugFromHost = getSlugFromHost(host) || params.slug;
 
-  // Caso 1: Tienda no encontrada
+  // Obtener datos de la tienda
+  const store = await getStoreData(slugFromHost);
+
+  // Tienda no encontrada
   if (!store) {
     return (
       <div className="flex items-center justify-center min-h-screen text-center">
@@ -98,16 +113,16 @@ export default async function PublicStorePage({ params }: PublicStorePageProps) 
     );
   }
 
-  // Caso 2: Tienda en mantenimiento
+  // Modo mantenimiento
   if (store.isMaintenanceMode) {
     return <MaintenancePage storeName={store.name} />;
   }
 
-  // Caso 3: Renderizar plantilla correcta
+  // Renderizar plantilla correcta
   switch (store.template) {
     case "moderno":
       return <TemplateModerno store={store} />;
     default:
-      return <TemplateModerno store={store} />; // Plantilla por defecto
+      return <TemplateModerno store={store} />; // plantilla por defecto
   }
 }
