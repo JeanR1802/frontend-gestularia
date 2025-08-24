@@ -1,16 +1,27 @@
-// middleware.ts (en la raíz de tu proyecto)
+// middleware.ts
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export function middleware(req: NextRequest) {
-  const url = req.nextUrl;
+  console.log('--- INICIO DEL MIDDLEWARE ---');
+  
+  const url = req.nextUrl.clone(); // Usamos clone para seguridad
   const host = req.headers.get('host');
   const rootDomain = 'gestularia.com';
 
-  if (host && host !== rootDomain && host !== `www.${rootDomain}`) {
+  console.log(`Host detectado: ${host}`);
+
+  if (host && host !== rootDomain && !host.startsWith('www.')) {
     const subdomain = host.replace(`.${rootDomain}`, '');
+    console.log(`Subdominio detectado: "${subdomain}"`);
+    
+    // Reescribimos la URL
     url.pathname = `/_sites/${subdomain}${url.pathname}`;
+    console.log(`Reescribiendo URL a: ${url.pathname}`);
+    
     return NextResponse.rewrite(url);
+  } else {
+    console.log('No se detectó un subdominio válido. Dejando pasar la solicitud.');
   }
 
   return NextResponse.next();
