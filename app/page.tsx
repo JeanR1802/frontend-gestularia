@@ -5,7 +5,7 @@ export default function HomePage() {
     <main className="flex min-h-screen flex-col items-center justify-center p-24">
       <div className="text-center">
         <h1 className="text-4xl md:text-6xl font-bold mb-4">
-          Bienvenido a Gestularia
+          Bienvenidos
         </h1>
         <p className="text-lg md:text-xl text-gray-600 mb-8">
           La forma más sencilla de lanzar tu negocio online.

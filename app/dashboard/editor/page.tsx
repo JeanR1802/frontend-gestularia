@@ -25,7 +25,7 @@ type Store = {
 };
 
 // Cambia esta URL por la de tu backend en producción
-const API_BASE = "https://tu-backend.vercel.app/api";
+const API_BASE = "https://backendg-seven.vercel.app";
 
 // Componente Toggle de modo mantenimiento
 function MaintenanceToggle({
