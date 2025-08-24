@@ -17,38 +17,6 @@ function MaintenancePage({ storeName }: { storeName: string }) {
   );
 }
 
-// --- Función para obtener datos del backend ---
-async function getStoreData(slug: string) {
-  try {
-    const API_BASE =
-      process.env.NEXT_PUBLIC_API_BASE || "https://api.gestularia.com";
-    const res = await fetch(`${API_BASE}/tiendas/${slug}`, {
-      cache: "no-store",
-    });
-    if (!res.ok) return null;
-    return res.json();
-  } catch (error) {
-    console.error("Error fetching store data:", error);
-    return null;
-  }
-}
-
-// --- Función para extraer slug desde subdominio ---
-function getSlugFromHost(host: string) {
-  const mainDomain = "gestularia.com";
-
-  if (!host.endsWith(mainDomain)) return null;
-
-  // extrae la parte antes de ".gestularia.com"
-  const parts = host.split(".");
-  // si es www.gestularia.com o solo gestularia.com → return null
-  if (parts.length <= 2) return null;
-
-  // subdominio real (primer segmento)
-  const subdomain = parts[0];
-  return subdomain === "www" || subdomain === "" ? null : subdomain;
-}
-
 // --- Plantilla moderno ---
 function TemplateModerno({ store }: { store: any }) {
   const primaryColor = store.primaryColor || "#0f172a";
@@ -93,24 +61,39 @@ function TemplateModerno({ store }: { store: any }) {
   );
 }
 
-// --- Página principal pública ---
+// --- Función para obtener datos del backend ---
+async function getStoreData(slug: string) {
+  try {
+    const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "https://api.gestularia.com";
+    const res = await fetch(`${API_BASE}/api/tiendas/${slug}`, { cache: "no-store" });
+    if (!res.ok) return null;
+    return res.json();
+  } catch (error) {
+    console.error("Error fetching store data:", error);
+    return null;
+  }
+}
+
+// --- Función para extraer subdominio ---
+function getSlugFromHost(host: string) {
+  const mainDomain = "gestularia.com";
+  if (!host.endsWith(mainDomain)) return null;
+  const subdomain = host.replace(`.${mainDomain}`, "");
+  return subdomain === "www" || subdomain === "" ? null : subdomain;
+}
+
+// --- Página pública ---
 interface PublicStorePageProps {
   params: { slug: string };
 }
 
 export default async function PublicStorePage({ params }: PublicStorePageProps) {
-  // Detectar host (server-side o client-side)
-  const host =
-    typeof window !== "undefined" ? window.location.host : undefined;
-  const slugFromHost = host ? getSlugFromHost(host) : null;
+  // Detectar host (subdominio) en server o fallback a params.slug
+  let host = typeof window !== "undefined" ? window.location.host : params.slug;
+  const slug = getSlugFromHost(host) || params.slug;
 
-  // usar subdominio o fallback a params.slug
-  const slug = slugFromHost || params.slug;
-
-  // Obtener datos de la tienda
   const store = await getStoreData(slug);
 
-  // Tienda no encontrada
   if (!store) {
     return (
       <div className="flex items-center justify-center min-h-screen text-center">
@@ -124,16 +107,14 @@ export default async function PublicStorePage({ params }: PublicStorePageProps) 
     );
   }
 
-  // Modo mantenimiento
   if (store.isMaintenanceMode) {
     return <MaintenancePage storeName={store.name} />;
   }
 
-  // Renderizar plantilla correcta
   switch (store.template) {
     case "moderno":
       return <TemplateModerno store={store} />;
     default:
-      return <TemplateModerno store={store} />; // plantilla por defecto
+      return <TemplateModerno store={store} />;
   }
 }
