@@ -1,5 +1,6 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+// middleware.ts
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
 export function middleware(req: NextRequest) {
   const host = req.headers.get("host") || "";
@@ -8,14 +9,11 @@ export function middleware(req: NextRequest) {
   if (host.endsWith(domain)) {
     const subdomain = host.replace(`.${domain}`, "");
     if (subdomain && subdomain !== "www") {
-      // guardamos el subdominio en un header
-      req.headers.set("x-subdomain", subdomain);
+      const url = req.nextUrl.clone();
+      url.pathname = `/tiendas/${subdomain}${url.pathname}`;
+      return NextResponse.rewrite(url);
     }
   }
 
-  return NextResponse.next({
-    request: {
-      headers: req.headers,
-    },
-  });
+  return NextResponse.next();
 }
