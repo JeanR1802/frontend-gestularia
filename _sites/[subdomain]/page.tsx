@@ -1,52 +1,82 @@
 // app/_sites/[subdomain]/page.tsx
 
+import React from "react";
 import { createClient } from '@supabase/supabase-js';
-import { notFound } from 'next/navigation'; // Importamos notFound
+import { notFound } from 'next/navigation';
 
-// Define cómo se ven los datos de una tienda.
-// ¡Asegúrate de que coincida con tu tabla en Supabase!
-type TiendaData = {
-  id: number;
-  nombre_tienda: string;
-  color_tema: string;
-  slug: string; // La columna con el identificador del subdominio
-  // ... más campos
-};
+// --- Tus componentes de plantillas están perfectos, no necesitan cambios ---
+// Puedes dejarlos aquí o moverlos a otro archivo e importarlos.
+function MaintenancePage({ storeName }: { storeName: string }) {
+  return (
+    <div className="flex items-center justify-center min-h-screen text-center bg-gray-50">
+      <div>
+        <h1 className="text-4xl font-bold">🛠️ {storeName} 🛠️</h1>
+        <p className="text-gray-600 mt-4 text-lg">
+          Nuestra tienda está temporalmente en mantenimiento. <br />
+          ¡Volveremos pronto!
+        </p>
+      </div>
+    </div>
+  );
+}
 
-// --- LA MAGIA DEL APP ROUTER ---
-// La página ahora es una función "async" que recibe "params"
-export default async function PaginaTienda({ params }: { params: { subdomain: string } }) {
-  // 1. Obtenemos el subdominio de los parámetros de la URL
-  const { subdomain } = params;
+function TemplateModerno({ store }: { store: any }) {
+  const primaryColor = store.primaryColor || "#0f172a";
+  const heroTitle = store.heroTitle || store.name || "Bienvenidos a la tienda";
+  const heroDescription = store.heroDescription || "Nuestros productos destacados";
 
-  // 2. Conexión a Supabase
-  // REEMPLAZA con tu URL y tu Anon Key.
-  // Es recomendable usar variables de entorno (process.env)
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'TU_URL_DE_SUPABASE';
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'TU_ANON_KEY_DE_SUPABASE';
+  return (
+    <div style={{ fontFamily: "sans-serif" }}>
+      <header
+        className="text-center py-16 px-4"
+        style={{ backgroundColor: primaryColor, color: "white" }}
+      >
+        <h1 className="text-5xl font-extrabold">{heroTitle}</h1>
+        <p className="mt-4 text-lg">{heroDescription}</p>
+      </header>
+      <main className="container mx-auto p-8">
+        <h2 className="text-3xl font-bold text-center mb-8">Nuestros Productos</h2>
+        {/* Aquí puedes añadir la lógica para mostrar productos si la tienes */}
+         <p className="text-center text-gray-500">No hay productos disponibles.</p>
+      </main>
+    </div>
+  );
+}
+
+
+// --- Página Pública Corregida ---
+// Ahora la función espera 'subdomain' para coincidir con el nombre de la carpeta
+export default async function PublicStorePage({ params }: { params: { subdomain: string } }) {
+  
+  // 1. Usamos 'subdomain' que viene de los params
+  const slug = params.subdomain;
+
+  // 2. Conexión directa y segura a Supabase desde el servidor
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
   const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-  // 3. Buscamos en la base de datos
-  // CAMBIA 'tiendas' por el nombre de tu tabla.
-  // CAMBIA 'slug' por el nombre de tu columna para el subdominio.
-  const { data: tienda, error } = await supabase
-    .from('Store')         // <-- NOMBRE DE TU TABLA
+  // 3. Buscamos en la tabla 'Store' donde la columna 'slug' coincida
+  const { data: store, error } = await supabase
+    .from('Store')
     .select('*')
-    .eq('slug', subdomain)   // <-- NOMBRE DE TU COLUMNA
+    .eq('slug', slug) // Buscamos usando el subdominio que nos llegó
     .single();
 
-  // Si hubo un error o no se encontró la tienda, llamamos a la función notFound()
-  // que automáticamente mostrará la página 404 de Next.js.
-  if (error || !tienda) {
+  // 4. Si hay un error o no se encuentra, mostramos un 404
+  if (error || !store) {
     notFound();
   }
 
-  // 4. Si encontramos la tienda, renderizamos el HTML
-  return (
-    <div style={{ backgroundColor: tienda.color_tema, minHeight: '100vh', padding: '2rem' }}>
-      <h1>Bienvenido a {tienda.nombre_tienda}</h1>
-      <p>Este sitio pertenece al subdominio: {tienda.slug}</p>
-      {/* Aquí construyes el resto de la página de la tienda */}
-    </div>
-  );
+  // 5. Tu lógica para mostrar la plantilla correcta se mantiene igual
+  if (store.isMaintenanceMode) {
+    return <MaintenancePage storeName={store.name} />;
+  }
+
+  switch (store.template) {
+    case "moderno":
+      return <TemplateModerno store={store} />;
+    default:
+      return <TemplateModerno store={store} />;
+  }
 }
