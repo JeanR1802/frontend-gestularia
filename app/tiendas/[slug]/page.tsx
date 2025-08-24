@@ -1,7 +1,7 @@
 // app/tiendas/[slug]/page.tsx
 import React from "react";
+import { headers } from "next/headers";
 
-// --- Evitamos usar "use client" para SSR dinámico ---
 export const dynamic = "force-dynamic";
 
 // --- Componente de mantenimiento ---
@@ -87,10 +87,10 @@ function getSlugFromHost(host: string) {
 // --- Página pública ---
 interface PublicStorePageProps {
   params: { slug: string };
-  headers: () => Headers;
 }
 
-export default async function PublicStorePage({ params, headers }: PublicStorePageProps) {
+export default async function PublicStorePage({ params }: PublicStorePageProps) {
+  // Obtener host desde headers en Server Component
   const host = headers().get("host") || params.slug;
   const slug = getSlugFromHost(host) || params.slug;
 
@@ -113,10 +113,5 @@ export default async function PublicStorePage({ params, headers }: PublicStorePa
     return <MaintenancePage storeName={store.name} />;
   }
 
-  switch (store.template) {
-    case "moderno":
-      return <TemplateModerno store={store} />;
-    default:
-      return <TemplateModerno store={store} />;
-  }
+  return <TemplateModerno store={store} />;
 }
