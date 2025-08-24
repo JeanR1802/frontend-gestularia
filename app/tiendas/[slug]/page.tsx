@@ -21,7 +21,7 @@ function MaintenancePage({ storeName }: { storeName: string }) {
 async function getStoreData(slug: string) {
   try {
     const API_BASE =
-      process.env.NEXT_PUBLIC_API_BASE || "https://backendg-seven.vercel.app";
+      process.env.NEXT_PUBLIC_API_BASE || "https://api.gestularia.com";
     const res = await fetch(`${API_BASE}/tiendas/${slug}`, {
       cache: "no-store", // Siempre datos recientes
     });
