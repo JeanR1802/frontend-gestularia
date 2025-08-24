@@ -23,7 +23,7 @@ async function getStoreData(slug: string) {
     const API_BASE =
       process.env.NEXT_PUBLIC_API_BASE || "https://api.gestularia.com";
     const res = await fetch(`${API_BASE}/tiendas/${slug}`, {
-      cache: "no-store", // Siempre datos recientes
+      cache: "no-store",
     });
     if (!res.ok) return null;
     return res.json();
@@ -36,8 +36,16 @@ async function getStoreData(slug: string) {
 // --- Función para extraer slug desde subdominio ---
 function getSlugFromHost(host: string) {
   const mainDomain = "gestularia.com";
+
   if (!host.endsWith(mainDomain)) return null;
-  const subdomain = host.replace(`.${mainDomain}`, "");
+
+  // extrae la parte antes de ".gestularia.com"
+  const parts = host.split(".");
+  // si es www.gestularia.com o solo gestularia.com → return null
+  if (parts.length <= 2) return null;
+
+  // subdominio real (primer segmento)
+  const subdomain = parts[0];
   return subdomain === "www" || subdomain === "" ? null : subdomain;
 }
 
@@ -91,13 +99,16 @@ interface PublicStorePageProps {
 }
 
 export default async function PublicStorePage({ params }: PublicStorePageProps) {
-  // Detectar host (server-side) o usar slug de params como fallback
+  // Detectar host (server-side o client-side)
   const host =
-    typeof window !== "undefined" ? window.location.host : params.slug;
-  const slugFromHost = getSlugFromHost(host) || params.slug;
+    typeof window !== "undefined" ? window.location.host : undefined;
+  const slugFromHost = host ? getSlugFromHost(host) : null;
+
+  // usar subdominio o fallback a params.slug
+  const slug = slugFromHost || params.slug;
 
   // Obtener datos de la tienda
-  const store = await getStoreData(slugFromHost);
+  const store = await getStoreData(slug);
 
   // Tienda no encontrada
   if (!store) {
