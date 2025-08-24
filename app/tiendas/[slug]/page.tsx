@@ -1,8 +1,6 @@
-// app/tiendas/[slug]/page.tsx
-import React from "react";
-import { headers } from "next/headers";
+"use client";
 
-export const dynamic = "force-dynamic";
+import React from "react";
 
 // --- Componente de mantenimiento ---
 function MaintenancePage({ storeName }: { storeName: string }) {
@@ -85,13 +83,9 @@ function getSlugFromHost(host: string) {
 }
 
 // --- Página pública ---
-interface PublicStorePageProps {
-  params: { slug: string };
-}
-
-export default async function PublicStorePage({ params }: PublicStorePageProps) {
-  // Obtener host desde headers en Server Component
-  const host = headers().get("host") || params.slug;
+export default async function PublicStorePage({ params }: { params: { slug: string } }) {
+  // Detectar host (subdominio) en server o fallback a params.slug
+  const host = typeof window !== "undefined" ? window.location.host : params.slug;
   const slug = getSlugFromHost(host) || params.slug;
 
   const store = await getStoreData(slug);
@@ -113,5 +107,10 @@ export default async function PublicStorePage({ params }: PublicStorePageProps) 
     return <MaintenancePage storeName={store.name} />;
   }
 
-  return <TemplateModerno store={store} />;
+  switch (store.template) {
+    case "moderno":
+      return <TemplateModerno store={store} />;
+    default:
+      return <TemplateModerno store={store} />;
+  }
 }
