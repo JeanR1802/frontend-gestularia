@@ -99,7 +99,7 @@ export default function EditorPage() {
 
     const fetchStore = async () => {
       try {
-        const response = await fetch(`${API_BASE}/store`, {
+        const response = await fetch(`${API_BASE}/api/store`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (response.ok) {
