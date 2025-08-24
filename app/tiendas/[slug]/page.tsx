@@ -1,4 +1,4 @@
-"use client";
+// app/tiendas/[slug]/page.tsx
 
 import React from "react";
 
@@ -15,30 +15,6 @@ function MaintenancePage({ storeName }: { storeName: string }) {
       </div>
     </div>
   );
-}
-
-// --- Función para obtener datos del backend ---
-async function getStoreData(slug: string) {
-  try {
-    const API_BASE =
-      process.env.NEXT_PUBLIC_API_BASE || "https://backendg-seven.vercel.app";
-    const res = await fetch(`${API_BASE}/tiendas/${slug}`, {
-      cache: "no-store", // Siempre datos recientes
-    });
-    if (!res.ok) return null;
-    return res.json();
-  } catch (error) {
-    console.error("Error fetching store data:", error);
-    return null;
-  }
-}
-
-// --- Función para extraer slug desde subdominio ---
-function getSlugFromHost(host: string) {
-  const mainDomain = "gestularia.com";
-  if (!host.endsWith(mainDomain)) return null;
-  const subdomain = host.replace(`.${mainDomain}`, "");
-  return subdomain === "www" || subdomain === "" ? null : subdomain;
 }
 
 // --- Plantilla moderno ---
@@ -85,21 +61,43 @@ function TemplateModerno({ store }: { store: any }) {
   );
 }
 
-// --- Página principal pública ---
-interface PublicStorePageProps {
-  params: { slug: string };
+// --- Obtener datos del backend ---
+async function getStoreData(slug: string) {
+  try {
+    const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "https://api.gestularia.com";
+    const res = await fetch(`${API_BASE}/api/tiendas/${slug}`, { cache: "no-store" });
+    if (!res.ok) return null;
+    return res.json();
+  } catch (error) {
+    console.error("Error fetching store data:", error);
+    return null;
+  }
 }
 
-export default async function PublicStorePage({ params }: PublicStorePageProps) {
-  // Detectar host (server-side) o usar slug de params como fallback
-  const host =
-    typeof window !== "undefined" ? window.location.host : params.slug;
-  const slugFromHost = getSlugFromHost(host) || params.slug;
+// --- Extraer subdominio ---
+function getSlugFromHost(host: string) {
+  const mainDomain = "gestularia.com";
+  if (!host.endsWith(mainDomain)) return null;
+  const subdomain = host.replace(`.${mainDomain}`, "");
+  return subdomain === "www" || subdomain === "" ? null : subdomain;
+}
 
-  // Obtener datos de la tienda
-  const store = await getStoreData(slugFromHost);
+// --- Esto fuerza SSR dinámico ---
+export const dynamic = "force-dynamic";
 
-  // Tienda no encontrada
+// --- Página pública ---
+interface PublicStorePageProps {
+  params: { slug: string };
+  headers?: () => Headers;
+}
+
+export default async function PublicStorePage({ params, headers }: PublicStorePageProps) {
+  // Tomar host desde request headers (SSR)
+  const host = headers ? headers().get("host") || params.slug : params.slug;
+  const slug = getSlugFromHost(host) || params.slug;
+
+  const store = await getStoreData(slug);
+
   if (!store) {
     return (
       <div className="flex items-center justify-center min-h-screen text-center">
@@ -113,16 +111,14 @@ export default async function PublicStorePage({ params }: PublicStorePageProps) 
     );
   }
 
-  // Modo mantenimiento
   if (store.isMaintenanceMode) {
     return <MaintenancePage storeName={store.name} />;
   }
 
-  // Renderizar plantilla correcta
   switch (store.template) {
     case "moderno":
       return <TemplateModerno store={store} />;
     default:
-      return <TemplateModerno store={store} />; // plantilla por defecto
+      return <TemplateModerno store={store} />;
   }
 }

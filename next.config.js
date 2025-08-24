@@ -4,8 +4,6 @@ const nextConfig = {
   experimental: {
     appDir: true,
   },
-  // Forzar que los assets se sirvan desde el dominio principal
-  assetPrefix: process.env.NODE_ENV === "production" ? "https://gestularia.com" : "",
-};
+}
 
-module.exports = nextConfig;
+module.exports = nextConfig
