@@ -30,7 +30,7 @@ export default async function PaginaTienda({ params }: { params: { subdomain: st
   // CAMBIA 'tiendas' por el nombre de tu tabla.
   // CAMBIA 'slug' por el nombre de tu columna para el subdominio.
   const { data: tienda, error } = await supabase
-    .from('tiendas')         // <-- NOMBRE DE TU TABLA
+    .from('Store')         // <-- NOMBRE DE TU TABLA
     .select('*')
     .eq('slug', subdomain)   // <-- NOMBRE DE TU COLUMNA
     .single();
